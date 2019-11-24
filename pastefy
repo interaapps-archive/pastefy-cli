@@ -118,7 +118,7 @@ use modules\colorful\Colors;
      }
  }
 
- ?>
+ 
 ?><?php
  namespace modules\colorful;
  
