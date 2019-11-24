@@ -1,0 +1,8 @@
+{
+    "init_scripts": [],
+    "cli_scripts": {},
+    "packages": {
+        "colorful": "1.0"
+    },
+    "directnamespaces": {}
+}

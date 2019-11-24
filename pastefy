@@ -1,0 +1,211 @@
+#!/usr/bin/env php
+<?php
+
+namespace app;
+
+use modules\colorful\Colors;
+
+class Paste {
+    private $apiURL = "https://pastefy.ga/create:paste";
+    private $postParams = [
+        "title"=>"Hi",
+        "content"=>"Hallo"
+    ];
+
+    public function send(){
+        Colors::info("Sending...");
+        $headers = [];
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_HEADER, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $this->postParams);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_URL, $this->apiURL);
+        curl_setopt($ch, CURLOPT_HEADERFUNCTION,
+        function($curl, $header) use (&$headers) {
+            $len = strlen($header);
+            $header = explode(':', $header, 2);
+            if (count($header) < 2)
+                return $len;
+            $headers[strtolower(trim($header[0]))][] = trim($header[1]);
+            return $len;
+        });
+
+        $response = curl_exec($ch);
+
+        if (isset($headers["location"][0]))
+            return "https://pastefy.ga".$headers["location"][0];
+        
+        Colors::error("A error occured");
+        exit();
+    }
+
+
+    public function setContents($contents){
+        $this->postParams["content"] = $contents;
+    }
+
+    public function setTitle($title){
+        $this->postParams["title"] = $title;
+    }
+
+    public function setPassword($password){
+        $this->postParams["password"] = $password;
+    }
+    
+
+
+}
+?><?php
+namespace modules\cli;
+
+use modules\colorful\Colors;
+
+ class CLI {
+    public $commands = [];
+    public $descriptions = [];
+    /**
+     * Change the not found errormessage
+     */
+    public $errorMessage;
+    /** 
+     * Shows a list with all commands on function not found error
+     */
+    public $showArgsOnError=true;
+
+    
+    /**
+     * Register a new command
+     * @param String function-name (Command)
+     * @param Function function (example:function() {return "Hello world";})
+     * @param String (Optional) Description
+     */
+    public function register(string $name, $func, string $description="") {
+        $this->commands[$name] = $func;
+        $this->descriptions[$name] = $description;
+    }
+
+    /**
+     * Runs a command
+     */
+    public function run($run) {
+        if (isset($this->commands[$run])) {
+            $function = ($this->commands[$run]);
+            echo $function($run);
+        } else {
+            if ($this->errorMessage != null) 
+                echo $this->errorMessage;
+            else
+                echo Colors::PREFIX_ERROR."Function \"".$run."\" not found!\n";
+            
+            
+            if ($this->showArgsOnError) {
+                $showArgs = Colors::PREFIX_DONE."Those are some valid functions: ";
+                foreach ($this->commands as $command=>$value) {
+                    $showArgs .= "\n  \033[92m- \033[0m".$command.": ".$this->descriptions[$command];
+                }
+                echo $showArgs."\n";
+            }
+
+        }
+    }
+
+     public function getCommands(): array {
+         return $this->commands;
+     }
+
+     public function getDescriptions(): array {
+         return $this->descriptions;
+     }
+ }
+
+ ?>
+?><?php
+ namespace modules\colorful;
+ 
+ class Colors {
+     public const HEADER = "\033[95m",
+                  OKBLUE = "\033[94m",
+                  OKGREEN = "\033[92m",
+                  WARNING = "\033[93m",
+                  FAIL = "\033[91m",
+                  ENDC = "\033[0m",
+                  BOLD = "\033[1m",
+                  UNDERLINE = "\033[4m",
+                  RED = "\033[31m",
+                  BLUE = "\033[34m",
+                  YELLOW = "\033[33m",
+                  TURQUIOUS = "\033[36m",
+                  GREEN = "\033[32m",
+                  BLINK = "\033[5m",
+                  BG_RED = "\033[41m",
+                  BG_BLUE = "\033[44m",
+                  BG_GREEN = "\033[42m",
+                  BG_YELLOW = "\033[43m",
+                  BG_BLACK = "\033[40m";
+        
+    public const PREFIX_DONE = "\033[92m᮰ Done\033[0m: ",
+                 PREFIX_WARN = "\033[93m᮰ WARNING\033[0m: ",
+                 PREFIX_INFO = "\033[36m᮰ INFO\033[0m: ",
+                 PREFIX_ERROR = "\033[91m᮰ ERROR\033[0m: ";
+                 
+    public static function info($str){
+        echo self::PREFIX_INFO.$str.self::ENDC."\n";
+    }
+     public static function warning($str){
+         echo self::PREFIX_WARN.$str.self::ENDC."\n";
+     }
+     public static function done($str){
+         echo self::PREFIX_DONE.$str.self::ENDC."\n";
+     }
+     public static function error($str){
+         echo self::PREFIX_ERROR.$str.self::ENDC."\n";
+     }
+ }
+
+?><?php
+chdir(".");
+
+use app\Paste;
+use modules\cli\CLI;
+use modules\colorful\Colors;
+
+$send = false;
+$a = null;
+$options = getopt("f:c:p:t:");
+
+$paste = new Paste;
+
+$paste->setTitle("");
+$paste->setContents("");
+
+
+if (isset($options["f"])) {
+    echo $options["f"];
+    if (file_exists($options["f"])) {
+        $paste->setContents(file_get_contents($options["f"]));
+        $paste->setTitle($options["f"]);
+        $send = true;
+    } else Colors::error("File not found");
+}
+
+if (isset($options["p"]))
+    $paste->setPassword($options["p"]);
+
+if (isset($options["c"])) {
+    $paste->setContents($options["c"]);
+    $send = true;
+}
+
+if (isset($options["t"]))
+    $paste->setTitle($options["t"]);
+
+if ($send)
+    Colors::done("Pasted! Here is your link ".$paste->send());
+else
+    Colors::error("Error! Contents not sent
+    -f · File
+    -p · Password
+    -c · contents
+    -t · title
+    ");
+?>

@@ -1,0 +1,13 @@
+{
+    "name": "colorful",
+    "version": "1.0",
+    "description": "Make your PHP CLI colorful!",
+    "author": "JulianFun123",
+    "keywords": [
+        "color",
+        "CLI"
+    ],
+    "modules": {},
+    "namespaces": {},
+    "build": {}
+}

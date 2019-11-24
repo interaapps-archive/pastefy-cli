@@ -1,0 +1,13 @@
+{
+    "name": "pastefycli",
+    "version": "1.0",
+    "description": "",
+    "author": "",
+    "keywords": [
+        ""
+    ],
+    "modules": {
+        "colorful": "1.0"
+    },
+    "namespaces": {}
+}
